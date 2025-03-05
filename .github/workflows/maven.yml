@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "main" ]
   pull_request:
-    branches: [main]
+    branches: [ "main" ]
 
 jobs:
   build:
@@ -20,11 +20,20 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Build with Maven
-        run: mvn -B verify dependency:tree -DoutputFile=dependency-tree.txt
+      - name: Build and generate dependency tree
+        run: |
+          mvn clean install -B
+          mvn dependency:tree -DoutputType=dot -DoutputFile=dependencies.dot
 
       - name: Submit dependency graph
         uses: advanced-security/maven-dependency-submission-action@v2
         with:
-          # Workaround for depgraph plugin issue
-          dependency-tree-file: dependency-tree.txt
+          directory: ${{ github.workspace }}
+
+      # Optional test reports
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results
+          path: target/surefire-reports
