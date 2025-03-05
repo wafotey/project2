@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [main]
 
 jobs:
   build:
@@ -21,8 +21,10 @@ jobs:
           cache: maven
 
       - name: Build with Maven
-        run: mvn -B verify --file pom.xml  # Changed from package to verify to include integration tests
+        run: mvn -B verify dependency:tree -DoutputFile=dependency-tree.txt
 
-      # Improved dependency graph submission
-      - name: Update dependency graph
-        uses: advanced-security/maven-dependency-submission-action@v2  # Use version tag instead of commit hash
+      - name: Submit dependency graph
+        uses: advanced-security/maven-dependency-submission-action@v2
+        with:
+          # Workaround for depgraph plugin issue
+          dependency-tree-file: dependency-tree.txt
